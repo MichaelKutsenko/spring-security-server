@@ -22,6 +22,8 @@ import server.service.EncryptService;
 public class SecurityController {
     @Value("${client.id}")
     private String ID;
+    @Value("${client.key}")
+    private String KEY;
 
     private final UserRepository userRepository;
     private final EncryptService encryptService;
@@ -35,24 +37,46 @@ public class SecurityController {
 
     @GetMapping(value = "/user")
     public ResponseEntity sayHello() {
-        server.domain.User user = new server.domain.User();
-        user.setUserName("user");
-        user.setPswrd("pswrd");
-//        userRepository.save(user);
-
-        return new ResponseEntity("user saved", HttpStatus.OK);
+        return new ResponseEntity("verification service works", HttpStatus.OK);
     }
 
     @PostMapping(value = "/verify", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity verify(@RequestBody VerificationRequestDto loginFormDto) {
+        prepareDb();
         if (!isCorrectClient(loginFormDto)) return new ResponseEntity(HttpStatus.UNAUTHORIZED);
 
         User user = userRepository.findByUserName(loginFormDto.getUsername());
-//        if (user == null) return new ResponseEntity(HttpStatus.BAD_REQUEST);
-
-        //hide password
-//        user.setPswrd(null);
+        if (user != null) {
+            user.setPswrd(encryptService.decrypt(user.getPswrd(), KEY));
+        }
         return new ResponseEntity(user, HttpStatus.OK);
+    }
+
+    private void prepareDb() {
+        User user = userRepository.findByUserName("user");
+        if (user == null) {
+            user = new User();
+            user.setUserName("user");
+            user.setRole("USER");
+            user.setPswrd(encryptService.encrypt("user", KEY));
+            userRepository.save(user);
+        }
+        User user1 = userRepository.findByUserName("manager");
+        if (user1 == null) {
+            user1 = new User();
+            user1.setUserName("manager");
+            user1.setRole("MANAGER");
+            user1.setPswrd(encryptService.encrypt("manager", KEY));
+            userRepository.save(user1);
+        }
+        User user3 = userRepository.findByUserName("admin");
+        if (user3 == null) {
+            user3 = new User();
+            user3.setUserName("admin");
+            user3.setRole("ADMIN");
+            user3.setPswrd(encryptService.encrypt("admin", KEY));
+            userRepository.save(user3);
+        }
     }
 
     private boolean isCorrectClient(VerificationRequestDto loginFormDto) {

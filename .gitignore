@@ -54,12 +54,4 @@ gradle-app.setting
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
 
-build.gradle
-
-settings.gradle
-
-gradlew.bat
-
 gradle/
-
-gradlew
